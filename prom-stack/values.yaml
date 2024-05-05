@@ -1,0 +1,183 @@
+# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+kube-prometheus-stack:
+  fullnameOverride: prom-stack
+  cleanPrometheusOperatorObjectNames: true
+  defaultRules:
+    rules:
+      etcd: false
+      kubeScheduler: false
+      kubeControllerManager: false
+  kubeControllerManager:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  grafana:
+    deploymentStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1 # Because we use persistent volume that cannot be mounted by more than one pods to make sure the pods is destroyed first.
+    assertNoLeakedSecrets: false # désactivation de cette nouvelle feature en attendant que l'issue https://github.com/grafana/helm-charts/issues/2899 soit corrigée
+    adminUser: "admin"
+    adminPassword: "admin"
+    ingress:
+      enabled: true
+      hosts:
+        - grafana.h4ckm1n.org
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+      server:
+        root_url: https://grafana.h4ckm1n.org
+      security:
+        admin_force_password_change: true
+        defaultDashboardsTimezone: Europe/Paris
+    sidecar:
+      dashboards:
+        enabled: true
+      datasources:
+        enabled: true
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-grafana-loki-gateway.loki.svc.cluster.local
+        version: 1
+        editable: true
+        jsonData:
+          tlsAuth: false
+          tlsAuthWithCACert: false
+    dashboards:
+      default:
+        blackbox-exporter:
+          gnetId: 13659
+        prom-dashboard:
+          gnetId: 15661 # https://grafana.com/grafana/dashboards/15661-1-k8s-for-prometheus-dashboard-20211010/
+          datasource: Prometheus
+          revision: 1
+        node-exporter:
+          gnetId: 1860 # https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+          datasource: Prometheus
+          revision: 33
+        nginx:
+          datasource: Prometheus
+          gnetId: 6927 # https://grafana.com/grafana/dashboards/6927
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: "default"
+            orgId: 1
+            folder: ""
+            type: file
+            disableDeletion: false
+            editable: true
+            allowUiUpdates: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 400Mi
+      requests:
+        cpu: 20m
+        memory: 200Mi
+  alertmanager:
+    enabled: true
+    config:
+      route:
+        receiver: "discord" # default receiver
+        routes:
+          - matchers:
+              - alertname = "Watchdog"
+            receiver: "null"
+          - matchers:
+              - alertname =~ ".*"
+            receiver: discord
+      receivers:
+        - name: "null" # keep the "null" receiver used by default configuration
+        - name: "discord"
+          discord_configs:
+            - webhook_url: https://discordapp.com/api/webhooks/1209232057251799040/nAcKwRfIMEatjQGJfJbmY93SPvHQXOACefmUjhMcn3anIdkZwPJ8nnbkYi1s7xbmDy5h
+              send_resolved: true
+              title: '{{ if eq .Status "firing" }} 🚨 Alert {{ else }} ✅ Resolve {{ end }}{{ .CommonLabels.alertname }} 🚧 {{ .CommonLabels.severity }}'
+              text: |-
+                - 📦 **Pod**: `{{ .CommonLabels.namespace }}/{{ .CommonLabels.pod }}`
+                {{- range .Alerts }}
+                - 🔖 **Alert**: `{{ .Labels.alertname }}`{{- with .Annotations }}{{- if .message }}{{- if .description }}, {{ .message }}, {{ .description }}{{- else }}, {{ .message }}{{- end }}{{- else if .description }}, {{ .description }}{{- end }}{{- end }}
+                {{- if .Annotations.Source }}
+                - 🌐 [View in Prometheus]({{ .Annotations.Source }})
+                {{- end }}
+                {{- if .Annotations.runbook_url }}
+                - 📘 [View Runbook]({{ .Annotations.runbook_url }})
+                {{- end }}
+                - 🔗 [Alert Source]({{ .GeneratorURL }})
+                {{- end }}
+                ---
+  prometheusOperator:
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 200Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
+    prometheusConfigReloader:
+      resources:
+        limits:
+          cpu: 50m
+          memory: 50Mi
+        requests:
+          cpu: 10m
+          memory: 10Mi
+  prometheus:
+    ingress:
+      enabled: true
+      hosts:
+        - prometheus.h4ckm1n.org
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 150m
+        memory: 1Gi
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: "blackbox-dev"
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+              - google.com
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter-gateway.prom-stack.svc.cluster.local
+          - source_labels: [__param_module]
+            target_label: module
+        ruleSelectorNilUsesHelmValues: false
+        serviceMonitorSelectorNilUsesHelmValues: false
+        podMonitorSelectorNilUsesHelmValues: false
+        probeSelectorNilUsesHelmValues: false
+        scrapeConfigSelectorNilUsesHelmValues: false
+        retention: 365d
+        retentionSize: 48GiB
+        enforcedNamespaceLabel: "enabled"
+        storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Gi
