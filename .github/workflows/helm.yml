@@ -1,0 +1,58 @@
+name: Helm Charts CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'argo-cd/**'
+      - 'blackbox/**'
+      - 'keycloak/**'
+      - 'grafana-loki/**'
+      - 'prom-stack/**'
+      - 'sealed-secrets/**'
+      - 'elastic/**'
+      - 'kibana/**'
+      - 'logstash/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'argo-cd/**'
+      - 'blackbox/**'
+      - 'keycloak/**'
+      - 'grafana-loki/**'
+      - 'prom-stack/**'
+      - 'sealed-secrets/**'
+      - 'elastic/**'
+      - 'kibana/**'
+      - 'logstash/**'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chart:
+          - argo-cd
+          - blackbox
+          - keycloak
+          - grafana-loki
+          - prom-stack
+          - sealed-secrets
+          - elastic
+          - kibana
+          - logstash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'v3.2.1'
+
+    - name: Lint Helm chart
+      run: helm lint ${{ matrix.chart }}
+    
+
