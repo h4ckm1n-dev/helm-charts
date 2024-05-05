@@ -1,0 +1,9 @@
+dependencies:
+- name: elasticsearch
+  repository: https://charts.bitnami.com/bitnami
+  version: 21.0.2
+- name: kibana
+  repository: https://charts.bitnami.com/bitnami
+  version: 11.0.5
+digest: sha256:0e77cf88ef247eae0fc333f8b7d55d796b3dd35bd7903f78d9aad5945b7a5a55
+generated: "2024-05-05T05:21:44.40030035+02:00"
