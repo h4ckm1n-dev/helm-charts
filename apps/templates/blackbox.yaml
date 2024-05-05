@@ -8,7 +8,7 @@ spec:
   template:
     metadata:
       name: blackbox
-      namespace: argo-cd
+      namespace: monitoring
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
