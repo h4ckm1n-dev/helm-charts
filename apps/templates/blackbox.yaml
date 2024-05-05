@@ -14,7 +14,7 @@ spec:
     spec:
       destination:
         namespace: monitoring
-        name: blackbox
+        
       project: default
       sources:
         - path: blackbox
@@ -25,7 +25,6 @@ spec:
             valueFiles:
               - values.yaml
       syncPolicy:
-
         syncOptions:
           - CreateNamespace=true
         retry:
