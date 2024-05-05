@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Values.app.name }}-config
-data:
-  blackbox.yml: |
-    {{ .Files.Get "config/blackbox.yml" | nindent 4 }}
