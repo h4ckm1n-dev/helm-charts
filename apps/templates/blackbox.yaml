@@ -4,8 +4,6 @@ metadata:
   name: blackbox
   namespace: argo-cd
 spec:
-  goTemplate: true
-  goTemplateOptions: ["missingkey=error"]
   template:
     metadata:
       name: blackbox
