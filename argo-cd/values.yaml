@@ -1,0 +1,85 @@
+# https://github.com/bitnami/charts/blob/main/bitnami/argo-cd/values.yaml
+argo-cd:
+  fullnameOverride: "argo-cd"
+  server:
+    resources:
+      limits:
+        cpu: 4
+        ephemeral-storage: 1Gi
+        memory: 1Gi
+      requests:
+        cpu: 20m
+        ephemeral-storage: 1Gi
+        memory: 100Mi
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      ingressClassName: nginx
+      hostname: argocd.h4ckm1n.org
+      tls: true
+      selfSigned: true
+  redis:
+    master:
+      persistence:
+        enabled: false # no need to persist argo cache
+      resources:
+        limits:
+          cpu: 4
+          ephemeral-storage: 1Gi
+          memory: 1Gi
+        requests:
+          cpu: 10m
+          ephemeral-storage: 1Gi
+          memory: 50Mi
+  repoServer:
+    resources:
+      limits:
+        cpu: 4
+        ephemeral-storage: 1Gi
+        memory: 2Gi
+      requests:
+        cpu: 10m
+        ephemeral-storage: 1Gi
+        memory: 100Mi
+  controller:
+    resources:
+      limits:
+        cpu: 4
+        ephemeral-storage: 1Gi
+        memory: 1800Mi
+      requests:
+        cpu: 150m
+        ephemeral-storage: 1Gi
+        memory: 1000Mi
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+      rules:
+        enabled: true
+        namespace: argo-cd
+        spec:
+          - alert: ArgocdServiceNotSynced
+            expr: argocd_app_info{sync_status!="Synced"} != 0
+            for: 2w
+            labels:
+              severity: warning
+            annotations:
+              summary: "ArgoCD service not synced (container {{`{{ $labels.container }}`}})"
+              description: |
+                Service {{`{{ $labels.name }}`}} run by ArgoCD is currently not in sync.
+                VALUE = {{`{{ $value }}`}}
+                LABELS = {{`{{ $labels }}`}}
+          - alert: ArgocdServiceUnhealthy
+            expr: argocd_app_info{health_status!="Healthy"} != 0
+            for: 15m
+            labels:
+              severity: warning
+            annotations:
+              summary: "ArgoCD service unhealthy (container {{`{{ $labels.container }}`}})"
+              description: |
+                Service {{`{{ $labels.name }}`}} run by ArgoCD is currently not healthy.
+                VALUE = {{`{{ $value }}`}}
+                LABELS = {{`{{ $labels }}`}}
