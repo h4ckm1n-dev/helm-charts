@@ -1,0 +1,6 @@
+apiVersion: v2
+name: blackbox-exporter
+description: A Helm chart for Blackbox Exporter deployement on K8s
+type: application
+version: 0.1.0
+appVersion: "0.25.0"
