@@ -1,0 +1,7 @@
+keycloak:
+  # https://github.com/bitnami/charts/tree/main/bitnami/keycloak/#installing-the-chart
+  replicaCount: 3
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
