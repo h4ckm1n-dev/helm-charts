@@ -2,18 +2,18 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: blackbox-exporter
-  namespace: argocd
+  namespace: argo-cd
 spec:
   generators: []
   template:
     metadata:
       name: blackbox-exporter
-      namespace: argocd
+      namespace: argo-cd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
       destination:
-        namespace: blackbox-exporter
+        namespace: prom-stack
         name: https://kubernetes.default.svc
       project: default
       sources:
