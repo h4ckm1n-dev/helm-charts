@@ -24,7 +24,6 @@ spec:
             valueFiles:
               - values.yaml
       syncPolicy:
-        # applicationsSync: create-update # create-update or sync (sync is the normal comportement of argo-cd, create update prevent argo-cd from deleting ressource)
         syncOptions:
           - CreateNamespace=true
         retry:

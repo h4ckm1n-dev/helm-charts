@@ -3,18 +3,6 @@
   "extends": ["config:recommended"],
   "packageRules": [
     {
-      "groupName": "all patch dependencies",
-      "groupSlug": "all-patch",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true,
-      "schedule": [
-        "after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"
-      ],
-      "labels": ["dependencies", "patch"],
-      "minimumReleaseAge": "2 days"
-    },
-    {
       "groupName": "all minor dependencies",
       "groupSlug": "all-minors",
       "matchPackagePatterns": ["*"],
@@ -34,6 +22,18 @@
       "automerge": false,
       "labels": ["dependencies", "major"],
       "minimumReleaseAge": "7 days"
+    },
+    {
+      "groupName": "all patch dependencies",
+      "groupSlug": "all-patch",
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "schedule": [
+        "after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"
+      ],
+      "labels": ["dependencies", "patch"],
+      "minimumReleaseAge": "2 days"
     }
   ],
   "automergeType": "branch",

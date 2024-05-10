@@ -10,6 +10,7 @@ helm upgrade --install argo-cd argo-cd/ --values argo-cd/values.yaml -n argo-cd 
 
 # Enable NGINX Ingress controller
 minikube addons enable ingress
+minikube addons enable metrics-server
 
 # Output success message
 printf "Minikube deployment stack done :)\n"
