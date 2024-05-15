@@ -6,12 +6,21 @@
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://charts.bitnami.com/bitnami | argo-cd | 6.0.15 |
+| https://charts.bitnami.com/bitnami | argo-cd | 6.0.12 |
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| argo-cd.applicationSet.enabled | bool | `true` |  |
+| argo-cd.applicationSet.resources.limits.cpu | int | `4` |  |
+| argo-cd.applicationSet.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
+| argo-cd.applicationSet.resources.limits.memory | string | `"500Mi"` |  |
+| argo-cd.applicationSet.resources.requests.cpu | string | `"20m"` |  |
+| argo-cd.applicationSet.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| argo-cd.applicationSet.resources.requests.memory | string | `"100Mi"` |  |
+| argo-cd.applicationSet.serviceAccount.automountServiceAccountToken | bool | `true` |  |
+| argo-cd.config.secret.create | bool | `true` |  |
 | argo-cd.controller.metrics.enabled | bool | `true` |  |
 | argo-cd.controller.metrics.rules.enabled | bool | `true` |  |
 | argo-cd.controller.metrics.rules.namespace | string | `"argo-cd"` |  |
@@ -34,7 +43,19 @@
 | argo-cd.controller.resources.requests.cpu | string | `"150m"` |  |
 | argo-cd.controller.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | argo-cd.controller.resources.requests.memory | string | `"1000Mi"` |  |
-| argo-cd.fullnameOverride | string | `"argo-cd"` |  |
+| argo-cd.dex.config.connectors[0].config.clientID | string | `"<github-client-id>"` |  |
+| argo-cd.dex.config.connectors[0].config.clientSecret | string | `"<github-client-secret>"` |  |
+| argo-cd.dex.config.connectors[0].config.redirectURI | string | `"<argo-cd-callback-url-for-dex>"` |  |
+| argo-cd.dex.config.connectors[0].id | string | `"github"` |  |
+| argo-cd.dex.config.connectors[0].name | string | `"GitHub"` |  |
+| argo-cd.dex.config.connectors[0].type | string | `"github"` |  |
+| argo-cd.dex.enabled | bool | `true` |  |
+| argo-cd.dex.resources.limits.cpu | int | `4` |  |
+| argo-cd.dex.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
+| argo-cd.dex.resources.limits.memory | string | `"1Gi"` |  |
+| argo-cd.dex.resources.requests.cpu | string | `"20m"` |  |
+| argo-cd.dex.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
+| argo-cd.dex.resources.requests.memory | string | `"100Mi"` |  |
 | argo-cd.redis.master.persistence.enabled | bool | `false` |  |
 | argo-cd.redis.master.resources.limits.cpu | int | `4` |  |
 | argo-cd.redis.master.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
@@ -48,13 +69,6 @@
 | argo-cd.repoServer.resources.requests.cpu | string | `"10m"` |  |
 | argo-cd.repoServer.resources.requests.ephemeral-storage | string | `"1Gi"` |  |
 | argo-cd.repoServer.resources.requests.memory | string | `"100Mi"` |  |
-| argo-cd.server.ingress.annotations."nginx.ingress.kubernetes.io/backend-protocol" | string | `"HTTPS"` |  |
-| argo-cd.server.ingress.annotations."nginx.ingress.kubernetes.io/force-ssl-redirect" | string | `"true"` |  |
-| argo-cd.server.ingress.enabled | bool | `true` |  |
-| argo-cd.server.ingress.hostname | string | `"argocd.h4ckm1n.org"` |  |
-| argo-cd.server.ingress.ingressClassName | string | `"nginx"` |  |
-| argo-cd.server.ingress.selfSigned | bool | `true` |  |
-| argo-cd.server.ingress.tls | bool | `true` |  |
 | argo-cd.server.resources.limits.cpu | int | `4` |  |
 | argo-cd.server.resources.limits.ephemeral-storage | string | `"1Gi"` |  |
 | argo-cd.server.resources.limits.memory | string | `"1Gi"` |  |

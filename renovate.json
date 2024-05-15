@@ -5,6 +5,19 @@
   ],
   "packageRules": [
     {
+      "groupName": "all patch dependencies",
+      "groupSlug": "all-patch",
+      "matchPackagePatterns": [
+        "*"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "automerge": true,
+      "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
+      "labels": ["dependencies", "patch"]
+    },
+    {
       "groupName": "all minor dependencies",
       "groupSlug": "all-minors",
       "matchPackagePatterns": [
@@ -14,14 +27,8 @@
         "minor"
       ],
       "automerge": true,
-      "schedule": [
-        "after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"
-      ],
-      "labels": [
-        "dependencies",
-        "minor"
-      ],
-      "minimumReleaseAge": "2 days"
+      "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
+      "labels": ["dependencies", "minor"]
     },
     {
       "groupName": "all major dependencies",
@@ -33,35 +40,13 @@
         "major"
       ],
       "automerge": false,
-      "labels": [
-        "dependencies",
-        "major"
-      ],
+      "labels": ["dependencies", "major"],
       "minimumReleaseAge": "7 days"
-    },
-    {
-      "groupName": "all patch dependencies",
-      "groupSlug": "all-patch",
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "automerge": true,
-      "schedule": [
-        "after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"
-      ],
-      "labels": [
-        "dependencies",
-        "patch"
-      ],
-      "minimumReleaseAge": "2 days"
     }
   ],
   "automergeType": "branch",
   "automerge": true,
   "requiredStatusChecks": null,
   "dependencyDashboard": true,
-  "timezone": "Europe/Paris"
+  "timezone": "Europe/London"
 }

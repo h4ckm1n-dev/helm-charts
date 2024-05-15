@@ -9,7 +9,7 @@ Applications
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | spec.destination.server | string | `"https://kubernetes.default.svc"` |  |
-| spec.source.repoURL | string | `"https://github.com/h4ckm1n-dev/helm-charts.git"` |  |
+| spec.source.repoURL | string | `"https://github.com/h4ckm1n-dev/argo-cd.git"` |  |
 | spec.source.targetRevision | string | `"HEAD"` |  |
 
 ----------------------------------------------

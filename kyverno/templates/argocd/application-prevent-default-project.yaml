@@ -1,0 +1,54 @@
+{{- $policy := index .Values "kyverno-policies" "additional" "argocd" "applicationPreventDefaultProject" }}
+{{- if $policy.enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: application-prevent-default-project
+  annotations:
+    policies.kyverno.io/title: Prevent Use of Default Project
+    policies.kyverno.io/category: Argo
+    policies.kyverno.io/severity: medium
+    kyverno.io/kyverno-version: 1.6.2
+    policies.kyverno.io/minversion: 1.6.0
+    kyverno.io/kubernetes-version: "1.23"
+    policies.kyverno.io/subject: Application
+    policies.kyverno.io/description: >-
+      This policy prevents the use of the default project in an Application.
+spec:
+  validationFailureAction: {{ $policy.validation }}
+  failurePolicy: {{ index $.Values "kyverno-policies" "failurePolicy" }}
+  background: true
+  rules:
+    - name: default-project
+      match:
+        any:
+        - resources:
+            kinds:
+              - Application
+      {{- $glbExdNs := index $.Values "kyverno-policies" "excludedNamespaces" }}
+      {{- $eNs := $policy.excludedNamespaces }}
+      {{- if or $glbExdNs $eNs  }}
+      exclude:
+        any:
+          - resources:
+              kinds:
+                - Application
+              namespaces:
+                {{- if $eNs}}
+                {{- $eNs | toYaml | nindent 16 }}
+                {{- end }}
+                {{- if $glbExdNs}}
+                {{- $glbExdNs | toYaml | nindent 16 }}
+                {{- end }}
+      {{- end }}
+      preconditions:
+        all:
+        - key: "{{`{{ request.operation || 'BACKGROUND' }}`}}"
+          operator: NotEquals
+          value: DELETE
+      validate:
+        message: "The default project may not be used in an Application."
+        pattern:
+          spec:
+            project: "!default"
+  {{- end }}

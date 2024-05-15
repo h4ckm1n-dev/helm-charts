@@ -1,0 +1,217 @@
+kyverno:
+  crds:
+    install: true
+
+  admissionController:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 60m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+  cleanupController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+  backgroundController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+  reportsController:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+
+  features:
+    logging:
+      verbosity: 4 # INFO
+
+  config:
+    excludeKyvernoNamespace: false
+
+    webhooks:
+      - namespaceSelector:
+          matchExpressions:
+            - key: kubernetes.io/metadata.name
+              operator: NotIn
+              # @see https://kyverno.io/docs/troubleshooting/#api-server-is-blocked
+              values:
+                - kube-system
+                - kyverno
+
+kyverno-policies:
+  # --- Native chart --- #
+
+  # set to "Enforce" to block invalid deployments
+  # set to "audit" to generate warning events on deployments
+  validationFailureAction: Audit
+
+  # see https://kyverno.io/policies/?policytypes=Pod%2520Security%2520Standards%2520%28Baseline%29%2BPod%2520Security%2520Standards%2520%28Restricted%29
+  podSecurityStandard: restricted
+
+  policyExclude:
+    adding-capabilities:
+      any:
+        - resources:
+            kinds: [Deployment, DaemonSet, Pod]
+            namespaces:
+              - kube-system
+
+    host-ports-none:
+      any:
+        - resources:
+            kinds: [Deployment, DaemonSet, Pod]
+            namespaces:
+              - kube-system
+
+    require-drop-all:
+      any:
+        - resources:
+            kinds: [StatefulSet, Deployment, DaemonSet, Pod]
+            namespaces:
+              - kube-system
+              - velero
+
+  failurePolicy: Ignore
+
+  # --- Custom chart --- #
+
+  # This will exclude namespace for EACH policy
+  excludedNamespaces: [kube-system]
+
+  additional:
+    argocd:
+      applicationPreventUpdatesProject:
+        enabled: false
+        validation: Audit 
+      applicationFieldValidation:
+        enabled: false
+        validation: Audit 
+      applicationPreventDefaultProject:
+        enabled: false
+        validation: Audit 
+      applicationsetNameMatchesProject:
+        enabled: false
+        validation: Audit 
+      appprojectClusterResourceBlacklist:
+        enabled: false
+        validation: Audit
+
+    aws:
+      requireAwsNodeIrsa:
+        enabled: true
+        validation: Audit
+
+      requireEncryptionAwsLoadBalancers:
+        enabled: true
+        validation: Audit
+
+    kubernetes:
+      requireDropAllCapabilities:
+        enabled: false
+        validation: Audit
+        excludedNamespaces: [velero]
+
+      disallowLatestTag:
+        enabled: true
+        validation: Audit
+
+      requirePodRequestsLimits:
+        enabled: true
+        validation: Audit
+
+      # Generator
+      addNetworkPolicy:
+        enabled: false
+
+      # Generator
+      addNetworkPolicyDns:
+        enabled: false
+
+      # Generator
+      addNamespaceQuota:
+        enabled: false
+
+      # Generator
+      addSafeToEvict:
+        enabled: false
+
+      # Garbage collector
+      checkDeprecatedApis:
+        enabled: false
+
+      disallowDefaultNamespace:
+        enabled: true
+        validation: Enforce
+
+      requireReadOnlyRootFileSystem:
+        enabled: true
+        validation: Audit
+
+      restrictNodePort:
+        enabled: true
+        validation: Audit
+
+      checkServiceAccount:
+        enabled: false
+        validation: Audit
+
+      checkNodeForCVE20220185:
+        enabled: true
+        validation: Audit
+
+      requireImageChecksum:
+        enabled: false
+        validation: Audit
+
+      # Mutator
+      #resolveImageToDigest:
+      #  enabled: false
+
+      requireEmptyDirRequestsLimits:
+        enabled: true
+        validation: Audit
+
+    cleanup:
+      # Garbage collector
+      barePods:
+        enabled: true
+
+      emptyReplicaSets:
+        enabled: true
+
+    nginx-ingress:
+      disallowIngressNginxCustomSnippets:
+        enabled: true
+        validation: Audit
+
+      restrictAnnotations:
+        enabled: true
+        validation: Enforce
+
+      restrictIngressPath:
+        enabled: true
+        validation: Enforce
+
+    velero:
+      validateCronSchedule:
+        enabled: false
+        validation: Audit
+
+      # Mutator
+      backupAllVolumes:
+        enabled: false 
