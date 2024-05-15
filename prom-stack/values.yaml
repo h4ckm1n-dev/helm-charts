@@ -84,7 +84,7 @@ kube-prometheus-stack:
         memory: 400Mi
       requests:
         cpu: 20m
-        memory: 400Mi
+        memory: 200Mi
   alertmanager:
     enabled: true
     config:

@@ -1,5 +1,5 @@
 loki:
-  fullnameOverride: "loki"
+  fullnameOverride: 'loki'
   compactor:
     resources:
       requests:
