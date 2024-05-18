@@ -1,23 +1,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: argo-cd
-  namespace: argo-cd
+  name: argocd
+  namespace: argocd
 spec:
   generators: []
   template:
     metadata:
-      name: argo-cd
-      namespace: argo-cd
+      name: argocd
+      namespace: argocd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
       destination:
-        namespace: argo-cd
+        namespace: argocd
         name: https://kubernetes.default.svc
       project: default
       sources:
-        - path: argo-cd
+        - path: argocd
           repoURL: https://github.com/h4ckm1n-dev/helm-charts.git
           targetRevision: HEAD
           helm:

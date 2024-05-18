@@ -24,7 +24,7 @@ spec:
             valueFiles:
               - values.yaml
       syncPolicy:
-        # applicationsSync: create-update # create-update or sync (sync is the normal comportement of keycloak, create update prevent argo-cd from deleting ressource)
+        # applicationsSync: create-update # create-update or sync (sync is the normal comportement of keycloak, create update prevent argocd from deleting ressource)
         syncOptions:
           - CreateNamespace=true
         retry:
