@@ -1,7 +1,4 @@
 kyverno:
-  crds:
-    install: true
-
   admissionController:
     replicas: 1
     resources:
@@ -84,7 +81,6 @@ kyverno-policies:
             kinds: [StatefulSet, Deployment, DaemonSet, Pod]
             namespaces:
               - kube-system
-              - velero
 
   failurePolicy: Ignore
 
@@ -97,16 +93,16 @@ kyverno-policies:
     argocd:
       applicationPreventUpdatesProject:
         enabled: false
-        validation: Audit 
+        validation: Audit
       applicationFieldValidation:
         enabled: false
-        validation: Audit 
+        validation: Audit
       applicationPreventDefaultProject:
         enabled: false
-        validation: Audit 
+        validation: Audit
       applicationsetNameMatchesProject:
         enabled: false
-        validation: Audit 
+        validation: Audit
       appprojectClusterResourceBlacklist:
         enabled: false
         validation: Audit
@@ -214,4 +210,4 @@ kyverno-policies:
 
       # Mutator
       backupAllVolumes:
-        enabled: false 
+        enabled: false

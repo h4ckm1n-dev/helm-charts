@@ -1,44 +1,69 @@
 # https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 kube-prometheus-stack:
-  fullnameOverride: prom-stack
-  cleanPrometheusOperatorObjectNames: true
+  grafana:
+    grafana.ini:
+      server:
+        # The full public facing url you use in browser, used for redirects and emails
+        root_url: https://grafana.h4ckm1n.org
+    ingress:
+      enabled: true
+      hosts:
+        - grafana.h4ckm1n.org
+      annotations:
+        kubernetes.io/ingress.class: nginx
+  fullnameOverride: kps
+  cleanPrometheusOperatorObjectNames: true # Evite d'avoir des noms abracadabrantesques
   defaultRules:
     rules:
+      # etcd, kube-scheduler and kube-controller-manager could not be monitored. They are managed outside, by EKS
       etcd: false
       kubeScheduler: false
-      kubeControllerManager: false
+      kubeControllerManager: false # EKS
+  # etcd, kube-scheduler and kube-controller-manager could not be scraped by prom. They are managed outside, by EKS
   kubeControllerManager:
     enabled: false
   kubeEtcd:
     enabled: false
   kubeScheduler:
     enabled: false
-  grafana:
     deploymentStrategy:
       type: RollingUpdate
       rollingUpdate:
         maxUnavailable: 1 # Because we use persistent volume that cannot be mounted by more than one pods to make sure the pods is destroyed first.
     assertNoLeakedSecrets: false # désactivation de cette nouvelle feature en attendant que l'issue https://github.com/grafana/helm-charts/issues/2899 soit corrigée
-    adminUser: "admin"
-    adminPassword: "admin"
-    ingress:
-      enabled: true
-      hosts:
-        - grafana.h4ckm1n.org
-      annotations:
-        spec.ingressClassName: nginx
-        app.kubernetes.io/component: "blackbox"
     grafana.ini:
-      server:
-        root_url: https://grafana.h4ckm1n.org
-      security:
-        admin_force_password_change: true
-        defaultDashboardsTimezone: Europe/Paris
+      auth.generic_oauth:
+        name: h4ckm1n.org
+        enabled: true
+        allow_sign_up: true
+        scopes: openid email profile
+        auth_url: https://auth.h4ckm1n.org/realms/h4ckm1n.org/protocol/openid-connect/auth
+        token_url: https://auth.h4ckm1n.org/realms/h4ckm1n.org/protocol/openid-connect/token
+        api_url: https://auth.h4ckm1n.org/realms/h4ckm1n.org/protocol/openid-connect/userinfo
+        client_id: grafana-client
+        client_secret: iv6RAGdEwGPVsJgRtD7cfAkjrH1UKhbi
+        skip_org_role_sync: true
+    defaultDashboardsTimezone: Europe/Paris
     sidecar:
       dashboards:
         enabled: true
       datasources:
         enabled: true
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 400Mi
+          ephemeral-storage: 100Mi
+        requests:
+          cpu: 20m
+          memory: 200Mi
+          ephemeral-storage: 100Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     additionalDataSources:
       - name: Loki
         type: loki
@@ -64,6 +89,22 @@ kube-prometheus-stack:
         nginx:
           datasource: Prometheus
           gnetId: 6927 # https://grafana.com/grafana/dashboards/6927
+    downloadDashboards:
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 400Mi
+          ephemeral-storage: 100Mi
+        requests:
+          cpu: 20m
+          memory: 200Mi
+          ephemeral-storage: 100Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
@@ -80,13 +121,34 @@ kube-prometheus-stack:
     persistence:
       enabled: true
       size: 1Gi
+    # request & limits positionnés en fonction de l'usage constaté :
+    # https://grafana.cicd.ddfbackend.com/d/85a562078cdf77779eaa1add43ccec1e/kubernetes-compute-resources-namespace-pods?var-datasource=default&var-cluster=&var-namespace=monitoring&orgId=1&refresh=10s
     resources:
       limits:
         cpu: 1000m
         memory: 400Mi
+        ephemeral-storage: 100Mi
       requests:
         cpu: 20m
         memory: 200Mi
+        ephemeral-storage: 100Mi
+    securityContext:
+      fsGroup: 1000
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    containerSecurityContext:
+      runAsUser: 1000
+      runAsNonRoot: true
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+    initChownData:
+      enabled: false # Not needed as we set default user see securityContext
   alertmanager:
     enabled: true
     config:
@@ -102,8 +164,9 @@ kube-prometheus-stack:
       receivers:
         - name: "null" # keep the "null" receiver used by default configuration
         - name: "discord"
-          discord_configs:
+          msteams_configs:
             - webhook_url:
+              send_resolved: true
               title: '{{ if eq .Status "firing" }}🚨 Alert {{ else }}✅ Resolve {{ end }}{{ .CommonLabels.alertname }} 🚧 {{ .CommonLabels.severity }}'
               text: |-
                 - 📦 **Pod**: `{{ .CommonLabels.namespace }}/{{ .CommonLabels.pod }}`
@@ -118,50 +181,79 @@ kube-prometheus-stack:
                 - 🔗 [Alert Source]({{ .GeneratorURL }})
                 {{- end }}
                 ---
+      # Pour le moment le json envoyer par alertmanager n'est pas compatible avec ce qui est attendue par google. https://github.com/prometheus/alertmanager/issues/2940
+      #- name: "google-hors-prod-receiver"
+      #  webhook_configs:
   prometheusOperator:
+    # request & limits positionnés en fonction de l'usage constaté :
     resources:
       limits:
         cpu: 1000m
-        memory: 200Mi
+        memory: 400Mi
+        ephemeral-storage: 100Mi
       requests:
-        cpu: 50m
-        memory: 100Mi
+        cpu: 20m
+        memory: 200Mi
+        ephemeral-storage: 100Mi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
     prometheusConfigReloader:
       resources:
         limits:
-          cpu: 50m
-          memory: 50Mi
+          cpu: 1000m
+          memory: 400Mi
+          ephemeral-storage: 100Mi
         requests:
-          cpu: 10m
-          memory: 10Mi
+          cpu: 20m
+          memory: 200Mi
+          ephemeral-storage: 100Mi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
   prometheus:
     ingress:
       enabled: true
       hosts:
         - prometheus.h4ckm1n.org
       annotations:
-        spec.ingressClassName: nginx
+        kubernetes.io/ingress.class: nginx
     resources:
       limits:
-        cpu: 2
-        memory: 2Gi
+        cpu: 1000m
+        memory: 400Mi
+        ephemeral-storage: 100Mi
       requests:
-        cpu: 150m
-        memory: 1Gi
+        cpu: 20m
+        memory: 200Mi
+        ephemeral-storage: 100Mi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
     prometheusSpec:
       additionalScrapeConfigsSecret:
         enabled: true
         name: additional-scrape-configs
         key: ingress-and-services-autodiscovery.yaml
-        ruleSelectorNilUsesHelmValues: false
-        serviceMonitorSelectorNilUsesHelmValues: false
-        podMonitorSelectorNilUsesHelmValues: false
-        probeSelectorNilUsesHelmValues: false
-        scrapeConfigSelectorNilUsesHelmValues: false
-        retention: 365d
-        retentionSize: 48GiB
-        enforcedNamespaceLabel: "enabled"
-        storageSpec:
+      # five config below used to activate services discovery in all namespaces not only in the namespaces where this chart is deployed
+      ruleSelectorNilUsesHelmValues: false
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      probeSelectorNilUsesHelmValues: false
+      scrapeConfigSelectorNilUsesHelmValues: false
+      retention: 365d
+      retentionSize: 48GiB
+      enforcedNamespaceLabel: "enabled"
+      storageSpec:
         volumeClaimTemplate:
           spec:
             accessModes:

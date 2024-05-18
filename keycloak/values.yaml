@@ -1,7 +1,16 @@
+# https://github.com/bitnami/charts/tree/main/bitnami/keycloak/#installing-the-chart
 keycloak:
-  # https://github.com/bitnami/charts/tree/main/bitnami/keycloak/#installing-the-chart
-  replicaCount: 3
+  service:
+    type: ClusterIP
+  ingress:
+    ingressClassName: nginx
+    enabled: true
+    hostname: auth.h4ckm1n.org
+  replicaCount: 2
   metrics:
     enabled: true
-    serviceMonitor:
-      enabled: true
+  proxy: edge # Parce qu'on chiffre la connexion jusqu'à l'ingress nginx
+  hostnameVerificationPolicy: "STRICT"
+  production: true
+  logging:
+    level: INFO
