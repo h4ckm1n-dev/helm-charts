@@ -205,10 +205,6 @@ kube-prometheus-stack:
       seccompProfile:
         type: RuntimeDefault
     prometheusSpec:
-      additionalScrapeConfigsSecret:
-        enabled: true
-        name: additional-scrape-configs
-        key: ingress-and-services-autodiscovery.yaml
       # five config below used to activate services discovery in all namespaces not only in the namespaces where this chart is deployed
       ruleSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
