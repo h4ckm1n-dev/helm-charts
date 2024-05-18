@@ -149,41 +149,6 @@ kube-prometheus-stack:
           - ALL
     initChownData:
       enabled: false # Not needed as we set default user see securityContext
-  alertmanager:
-    enabled: true
-    config:
-      route:
-        receiver: "discord" # default receiver
-        routes:
-          - matchers:
-              - alertname = "Watchdog"
-            receiver: "null"
-          - matchers:
-              - alertname =~ ".*"
-            receiver: discord
-      receivers:
-        - name: "null" # keep the "null" receiver used by default configuration
-        - name: "discord"
-          msteams_configs:
-            - webhook_url:
-              send_resolved: true
-              title: '{{ if eq .Status "firing" }}🚨 Alert {{ else }}✅ Resolve {{ end }}{{ .CommonLabels.alertname }} 🚧 {{ .CommonLabels.severity }}'
-              text: |-
-                - 📦 **Pod**: `{{ .CommonLabels.namespace }}/{{ .CommonLabels.pod }}`
-                {{- range .Alerts }}
-                - 🔖 **Alert**: `{{ .Labels.alertname }}`{{- with .Annotations }}{{- if .message }}{{- if .description }}, {{ .message }}, {{ .description }}{{- else }}, {{ .message }}{{- end }}{{- else if .description }}, {{ .description }}{{- end }}{{- end }}
-                {{- if .Annotations.Source }}
-                - 🌐 [View in Prometheus]({{ .Annotations.Source }})
-                {{- end }}
-                {{- if .Annotations.runbook_url }}
-                - 📘 [View Runbook]({{ .Annotations.runbook_url }})
-                {{- end }}
-                - 🔗 [Alert Source]({{ .GeneratorURL }})
-                {{- end }}
-                ---
-      # Pour le moment le json envoyer par alertmanager n'est pas compatible avec ce qui est attendue par google. https://github.com/prometheus/alertmanager/issues/2940
-      #- name: "google-hors-prod-receiver"
-      #  webhook_configs:
   prometheusOperator:
     # request & limits positionnés en fonction de l'usage constaté :
     resources:
