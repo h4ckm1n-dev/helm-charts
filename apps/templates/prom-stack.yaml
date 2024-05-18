@@ -14,7 +14,7 @@ spec:
     spec:
       destination:
         namespace: kube-system
-        name: https://kubernetes.default.svc
+        name: minikube
       project: default
       sources:
         - path: prom-stack

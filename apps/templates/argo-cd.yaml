@@ -14,7 +14,7 @@ spec:
     spec:
       destination:
         namespace: argocd
-        name: https://kubernetes.default.svc
+        name: minikube
       project: default
       sources:
         - path: argocd
