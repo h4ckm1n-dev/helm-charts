@@ -53,33 +53,3 @@ argo-cd:
         cpu: 150m
         ephemeral-storage: 1Gi
         memory: 1000Mi
-    metrics:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-      rules:
-        enabled: true
-        namespace: argo-cd
-        spec:
-          - alert: ArgocdServiceNotSynced
-            expr: argocd_app_info{sync_status!="Synced"} != 0
-            for: 2w
-            labels:
-              severity: warning
-            annotations:
-              summary: "ArgoCD service not synced (container {{`{{ $labels.container }}`}})"
-              description: |
-                Service {{`{{ $labels.name }}`}} run by ArgoCD is currently not in sync.
-                VALUE = {{`{{ $value }}`}}
-                LABELS = {{`{{ $labels }}`}}
-          - alert: ArgocdServiceUnhealthy
-            expr: argocd_app_info{health_status!="Healthy"} != 0
-            for: 15m
-            labels:
-              severity: warning
-            annotations:
-              summary: "ArgoCD service unhealthy (container {{`{{ $labels.container }}`}})"
-              description: |
-                Service {{`{{ $labels.name }}`}} run by ArgoCD is currently not healthy.
-                VALUE = {{`{{ $value }}`}}
-                LABELS = {{`{{ $labels }}`}}
