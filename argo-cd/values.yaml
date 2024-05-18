@@ -1,7 +1,7 @@
-# https://github.com/bitnami/charts/blob/main/bitnami/argo-cd/values.yaml
 argo-cd:
   fullnameOverride: "argo-cd"
   server:
+    secretkey: "eW91ci1yYW5kb20tc2VjcmV0"
     resources:
       limits:
         cpu: 4
