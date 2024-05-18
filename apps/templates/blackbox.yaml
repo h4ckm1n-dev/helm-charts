@@ -13,7 +13,7 @@ spec:
         - resources-finalizer.argocd.argoproj.io
     spec:
       destination:
-        namespace: loki
+        namespace: blackbox
         name: https://kubernetes.default.svc
       project: default
       sources:

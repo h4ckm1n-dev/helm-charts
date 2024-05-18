@@ -13,7 +13,7 @@ spec:
         - resources-finalizer.argocd.argoproj.io
     spec:
       destination:
-        namespace: kube-system
+        namespace: prom-stack
         name: https://kubernetes.default.svc
       project: default
       sources:
