@@ -2,13 +2,13 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: prom-stack
-  namespace: argocd
+  namespace: argo-cd
 spec:
   generators: []
   template:
     metadata:
       name: prom-stack
-      namespace: argocd
+      namespace: argo-cd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
     spec:
