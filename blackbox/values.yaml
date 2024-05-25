@@ -59,7 +59,7 @@ prometheus-blackbox-exporter:
     hosts:
       ## The host property on hosts and tls is passed through helm tpl function.
       ## ref: https://helm.sh/docs/developing_charts/#using-the-tpl-function
-      - host: blackbox.cicd.ddfbackend.com
+      - host: blackbox.h4ckm1n.org
         paths:
           - path: /
             pathType: ImplementationSpecific

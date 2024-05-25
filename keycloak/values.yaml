@@ -1,5 +1,13 @@
 # https://github.com/bitnami/charts/tree/main/bitnami/keycloak/#installing-the-chart
 keycloak:
+  scrapeConfig:
+  enabled: true
+  metrics_path: "/probe"
+  params:
+    module: ["http_2xx"] # List of modules
+  static_configs:
+    targets:
+      - "blackbox.cicd.ddfbackend.com"
   service:
     type: ClusterIP
   ingress:

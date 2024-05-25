@@ -1,36 +1,29 @@
-# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
 kube-prometheus-stack:
-  grafana:
-    grafana.ini:
-      server:
-        # The full public facing url you use in browser, used for redirects and emails
-        root_url: https://grafana.h4ckm1n.org
-    ingress:
-      enabled: true
-      hosts:
-        - grafana.h4ckm1n.org
-      annotations:
-        kubernetes.io/ingress.class: nginx
   fullnameOverride: kps
-  cleanPrometheusOperatorObjectNames: true # Evite d'avoir des noms abracadabrantesques
+  cleanPrometheusOperatorObjectNames: true
+  scrapeConfig:
+    enabled: true
+    job_name: "blackbox"
+    metrics_path: "/probe"
+    params:
+      module: ["http_2xx"] # List of modules
+    static_configs:
+      targets:
+        - "https://google.com"
+    endPoint: "127.0.0.1:9115"
   defaultRules:
     rules:
-      # etcd, kube-scheduler and kube-controller-manager could not be monitored. They are managed outside, by EKS
       etcd: false
       kubeScheduler: false
-      kubeControllerManager: false # EKS
-  # etcd, kube-scheduler and kube-controller-manager could not be scraped by prom. They are managed outside, by EKS
+      kubeControllerManager: false
   kubeControllerManager:
     enabled: false
   kubeEtcd:
     enabled: false
   kubeScheduler:
     enabled: false
-    deploymentStrategy:
-      type: RollingUpdate
-      rollingUpdate:
-        maxUnavailable: 1 # Because we use persistent volume that cannot be mounted by more than one pods to make sure the pods is destroyed first.
-    assertNoLeakedSecrets: false # désactivation de cette nouvelle feature en attendant que l'issue https://github.com/grafana/helm-charts/issues/2899 soit corrigée
+
+  grafana:
     grafana.ini:
       auth.generic_oauth:
         name: h4ckm1n.org
@@ -41,7 +34,6 @@ kube-prometheus-stack:
         token_url: https://auth.h4ckm1n.org/realms/h4ckm1n.org/protocol/openid-connect/token
         api_url: https://auth.h4ckm1n.org/realms/h4ckm1n.org/protocol/openid-connect/userinfo
         client_id: grafana-client
-        client_secret: iv6RAGdEwGPVsJgRtD7cfAkjrH1UKhbi
         skip_org_role_sync: true
     defaultDashboardsTimezone: Europe/Paris
     sidecar:
@@ -79,16 +71,16 @@ kube-prometheus-stack:
         blackbox-exporter:
           gnetId: 13659
         prom-dashboard:
-          gnetId: 15661 # https://grafana.com/grafana/dashboards/15661-1-k8s-for-prometheus-dashboard-20211010/
+          gnetId: 15661
           datasource: Prometheus
           revision: 1
         node-exporter:
-          gnetId: 1860 # https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+          gnetId: 1860
           datasource: Prometheus
           revision: 33
         nginx:
           datasource: Prometheus
-          gnetId: 6927 # https://grafana.com/grafana/dashboards/6927
+          gnetId: 6927
     downloadDashboards:
       resources:
         limits:
@@ -146,9 +138,9 @@ kube-prometheus-stack:
         drop:
           - ALL
     initChownData:
-      enabled: false # Not needed as we set default user see securityContext
+      enabled: false
+
   prometheusOperator:
-    # request & limits positionnés en fonction de l'usage constaté :
     resources:
       limits:
         cpu: 1000m
@@ -180,6 +172,7 @@ kube-prometheus-stack:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
+
   prometheus:
     ingress:
       enabled: true
@@ -202,8 +195,6 @@ kube-prometheus-stack:
       runAsNonRoot: true
       seccompProfile:
         type: RuntimeDefault
-    prometheusSpec:
-      # five config below used to activate services discovery in all namespaces not only in the namespaces where this chart is deployed
       ruleSelectorNilUsesHelmValues: false
       serviceMonitorSelectorNilUsesHelmValues: false
       podMonitorSelectorNilUsesHelmValues: false
