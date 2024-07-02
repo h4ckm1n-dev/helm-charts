@@ -12,7 +12,7 @@
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "{{depName}}",
-      "versioningTemplate": "semver"
+      "versioningTemplate": "semver",
       "currentValueTemplate": "{{{currentValue}}}"
     }
   ],
