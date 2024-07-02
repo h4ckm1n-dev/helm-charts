@@ -5,13 +5,13 @@
     {
       "fileMatch": ["^values\\.yaml$"],
       "matchStrings": [
-        "https://github\\.com/dependency-check/dependency-check-sonar-plugin/releases/download/(?<currentValue>[^/]+)/sonar-dependency-check-plugin-[^/]+\\.jar",
-        "https://github\\.com/spotbugs/sonar-findbugs/releases/download/(?<currentValue>[^/]+)/sonar-findbugs-plugin-[^/]+\\.jar",
-        "https://github\\.com/sbaudoin/sonar-yaml/releases/download/v(?<currentValue>[^/]+)/sonar-yaml-plugin-[^/]+\\.jar",
-        "https://github\\.com/sonargraph/sonar-sonargraph-integration/releases/download/(?<currentValue>[^/]+)/sonar-sonargraph-integration-[^/]+\\.jar"
+        "https://github\\.com/dependency-check/dependency-check-sonar-plugin/releases/download/(?<version>[^/]+)/sonar-dependency-check-plugin-\\k<version>\\.jar",
+        "https://github\\.com/spotbugs/sonar-findbugs/releases/download/(?<version>[^/]+)/sonar-findbugs-plugin-\\k<version>\\.jar",
+        "https://github\\.com/sbaudoin/sonar-yaml/releases/download/v(?<version>[^/]+)/sonar-yaml-plugin-\\k<version>\\.jar",
+        "https://github\\.com/sonargraph/sonar-sonargraph-integration/releases/download/(?<version>[^/]+)/sonar-sonargraph-integration-\\k<version>\\.jar"
       ],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "{{{depName}}}",
+      "depNameTemplate": "sonarqube-plugin-{{{version}}}",
       "versioningTemplate": "semver"
     }
   ],
