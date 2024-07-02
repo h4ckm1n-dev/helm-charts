@@ -1,18 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    "./renovate-config.js"
   ],
   "packageRules": [
     {
       "groupName": "all patch dependencies",
       "groupSlug": "all-patch",
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
       "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
       "labels": ["dependencies", "patch"]
@@ -20,12 +17,8 @@
     {
       "groupName": "all minor dependencies",
       "groupSlug": "all-minors",
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "matchUpdateTypes": [
-        "minor"
-      ],
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["minor"],
       "automerge": true,
       "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
       "labels": ["dependencies", "minor"]
@@ -33,12 +26,8 @@
     {
       "groupName": "all major dependencies",
       "groupSlug": "all-majors",
-      "matchPackagePatterns": [
-        "*"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["dependencies", "major"],
       "minimumReleaseAge": "7 days"
@@ -48,6 +37,5 @@
   "automerge": true,
   "requiredStatusChecks": null,
   "dependencyDashboard": true,
-  "timezone": "Europe/London",
-  "recreateWhen": "never"
+  "timezone": "Europe/London"
 }
