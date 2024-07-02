@@ -11,7 +11,7 @@
         "https://github\\.com/sonargraph/sonar-sonargraph-integration/releases/download/(?<currentValue>[^/]+)/sonar-sonargraph-integration-[^/]+\\.jar"
       ],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "sonarqube-plugin",
+      "depNameTemplate": "{{{depName}}}",
       "versioningTemplate": "semver"
     }
   ],
