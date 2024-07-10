@@ -1,3 +1,11 @@
+# Changelog Report (10/07/2024)
+
+## Updates by Renovate for h4ckm1n-dev/helm-charts
+
+- **09/07/2024**: Update Helm release keycloak to v21.6.0 (from 21.5.0 to 21.6.0) ([68b1cbb](https://github.com/h4ckm1n-dev/helm-charts/commit/68b1cbb0e95092f1cd906c74852fe7745bbb7322))
+- **08/07/2024**: Update Helm release keycloak to v21.5.0 (from 21.4.5 to 21.5.0) ([dfa2736](https://github.com/h4ckm1n-dev/helm-charts/commit/dfa273691b542f90402ed1ce6c4e0d68b7c0f901))
+
+
 ## Changelog Report (10/07/2024)
 
 ### Updates by Renovate for **h4ckm1n-dev/helm-charts**
