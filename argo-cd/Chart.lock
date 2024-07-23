@@ -1,6 +1,6 @@
 dependencies:
 - name: argo-cd
   repository: https://charts.bitnami.com/bitnami
-  version: 6.6.3
-digest: sha256:91ff5a5e86c05da73f5ef08580defbb0718967b351764fb4596c4fa9a5dbb9a3
-generated: "2024-07-18T21:39:24.908121633Z"
+  version: 6.6.4
+digest: sha256:7d77476a6f712e7315922d49b841f6e574bc6878c5905c6fd478c5ecec265a37
+generated: "2024-07-23T22:12:45.696139123Z"
