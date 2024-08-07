@@ -1,6 +1,6 @@
 dependencies:
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami
-  version: 4.6.9
-digest: sha256:7a4fbe35a2641c6d7d6d2956ea2ee71eecd5a1b801806987e902e4035f852dc3
-generated: "2024-07-25T21:33:46.535648384Z"
+  version: 4.6.10
+digest: sha256:3cc39591e440c36517a19c08ac8710a24e6a3536b9d3019a9983415baa8479cc
+generated: "2024-08-07T03:13:54.715524743Z"
