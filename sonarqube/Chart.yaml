@@ -6,5 +6,5 @@ appVersion: "1.0"
 
 dependencies:
 - name: sonarqube
-  version: 5.2.12
+  version: 5.2.13
   repository: oci://registry-1.docker.io/bitnamicharts
