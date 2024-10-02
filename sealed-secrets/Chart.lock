@@ -1,6 +1,6 @@
 dependencies:
 - name: sealed-secrets
   repository: https://charts.bitnami.com/bitnami
-  version: 2.4.6
-digest: sha256:032a7a56dc01c11ce08e57178517477ff6dd52e054a6b001be0a3ad3e07b787a
-generated: "2024-09-09T00:06:31.448142585Z"
+  version: 2.4.7
+digest: sha256:4c493db76f619e1e33985df0f169a0b9ec723013fcb528759aaa143b87233738
+generated: "2024-10-02T21:43:42.248653065Z"
