@@ -1,27 +1,52 @@
 sonarqube:
+  fullnameOverride: "sonarqube"
   extraDeploy:
-  existingSecret: "sonarqube" # cf. sonarqube SealedSecret
-  minHeapSize: 256m
-  maxHeapSize: 512m
-  extraProperties:
-    - sonar.search.javaAdditionalOpts=-Xms2g -Xmx2g # Elastic suggests to use the same value for Xms and Xmx
+    - |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: sonarqube
+      type: Opaque
+      stringData:
+        sonarqube-password: admin
+    - |
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: sonarqube-postgresql
+      type: Opaque
+      stringData:
+        postgres-password: postgres
+        password: postgres
+  # existingSecret: "sonarqube" # cf. sonarqube SealedSecret
+  minHeapSize: 512m
+  maxHeapSize: 1024m
+  extraProperties: |
+    sonar.search.javaAdditionalOpts=-Xms1g -Xmx1g
   livenessProbe:
-    initialDelaySeconds: 600 # 10 minutes
+    initialDelaySeconds: 300
+  readinessProbe:
+    initialDelaySeconds: 60
   resources:
     limits:
-      cpu: 2
-      memory: 5Gi
+      cpu: 1.5
+      memory: 4Gi
     requests:
       cpu: 100m
       memory: 2Gi
   service:
-    type: ClusterIP # default is LoadBalancer
+    type: ClusterIP
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostname: sonar.cicd.ddfbackend.com
+    hostname: sonarqube.h4ckm1n.org
     annotations:
-      nginx.ingress.kubernetes.io/proxy-body-size: 5m
+      nginx.ingress.kubernetes.io/proxy-body-size: 100m
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    tls:
+      - secretName: sonarqube-tls
+        hosts:
+          - sonarqube.h4ckm1n.org
   plugins:
     install:
       - https://github.com/dependency-check/dependency-check-sonar-plugin/releases/download/4.0.0/sonar-dependency-check-plugin-4.0.0.jar
@@ -29,17 +54,55 @@ sonarqube:
       - https://github.com/sbaudoin/sonar-yaml/releases/download/v1.9.0/sonar-yaml-plugin-1.9.0.jar
       - https://github.com/sonargraph/sonar-sonargraph-integration/releases/download/8.0.0/sonar-sonargraph-integration-8.0.0.jar
   persistence:
-    enabled: false
+    enabled: true
+    size: 10Gi
+    storageClass: standard
   serviceAccount:
-    automountServiceAccountToken: false # a best practice is to avoid mounting serviceAccount if it is not necessary
+    automountServiceAccountToken: false
     create: true
   postgresql:
     enabled: true
+    persistence:
+      enabled: true
+      size: 8Gi
     auth:
-      existingSecret: sonarqube-postgresql # cf. sonarqube-postgresql-password SealedSecret below
-      username: sonar
-      database: sonar
-    primary:
-      persistence:
-        enabled: true
-        size: 5Gi
+      existingSecret: sonarqube-postgresql
+    resources:
+      limits:
+        cpu: 1
+        memory: 1Gi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+    privileged: false
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  jvmOpts: "-Xmx2048m -Xms1024m -XX:+HeapDumpOnOutOfMemoryError"
+  startTimeout: 600
+  initContainers:
+    - name: "sysctl"
+      securityContext:
+        privileged: true
+      command:
+        - /bin/bash
+        - -ec
+        - |
+          CURRENT="$(sysctl -n vm.max_map_count)"
+          DESIRED="262144"
+          if [[ "$DESIRED" -gt "$CURRENT" ]]; then
+              sysctl -w vm.max_map_count=262144
+          fi
+          CURRENT="$(sysctl -n fs.file-max)"
+          DESIRED="65536"
+          if [[ "$DESIRED" -gt "$CURRENT" ]]; then
+              sysctl -w fs.file-max=65536
+          fi

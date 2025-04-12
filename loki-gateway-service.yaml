@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-gateway-proxy
+  namespace: grafana-loki
+spec:
+  ports:
+    - port: 80
+      name: http
+  selector:
+    app: loki-gateway-proxy

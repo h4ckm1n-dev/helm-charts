@@ -1,55 +1,90 @@
 argo-cd:
   fullnameOverride: "argo-cd"
   server:
-    secretkey: "eW91ci1yYW5kb20tc2VjcmV0"
+    secretkey: "$(openssl rand -hex 16)"
     resources:
       limits:
-        cpu: 4
+        cpu: 1
         ephemeral-storage: 1Gi
-        memory: 1Gi
+        memory: 512Mi
       requests:
         cpu: 20m
-        ephemeral-storage: 1Gi
+        ephemeral-storage: 512Mi
         memory: 100Mi
     ingress:
       enabled: true
       annotations:
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
       ingressClassName: nginx
       hostname: argocd.h4ckm1n.org
       tls: true
-      selfSigned: true
+      selfSigned: false
   redis:
     master:
       persistence:
-        enabled: false # no need to persist argo cache
+        enabled: true
+        size: 1Gi
       resources:
         limits:
-          cpu: 4
-          ephemeral-storage: 1Gi
-          memory: 1Gi
+          cpu: 1
+          ephemeral-storage: 512Mi
+          memory: 512Mi
         requests:
           cpu: 10m
-          ephemeral-storage: 1Gi
+          ephemeral-storage: 256Mi
           memory: 50Mi
   repoServer:
     resources:
       limits:
-        cpu: 4
+        cpu: 1
         ephemeral-storage: 1Gi
-        memory: 2Gi
+        memory: 1Gi
       requests:
         cpu: 10m
-        ephemeral-storage: 1Gi
+        ephemeral-storage: 512Mi
         memory: 100Mi
   controller:
     resources:
       limits:
-        cpu: 4
+        cpu: 1
         ephemeral-storage: 1Gi
-        memory: 1800Mi
+        memory: 1Gi
       requests:
         cpu: 150m
-        ephemeral-storage: 1Gi
-        memory: 1000Mi
+        ephemeral-storage: 512Mi
+        memory: 512Mi
+  applicationSet:
+    enabled: true
+    resources:
+      limits:
+        cpu: 1
+        memory: 512Mi
+      requests:
+        cpu: 20m
+        memory: 100Mi
+  dex:
+    enabled: true
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+  config:
+    # Backup configuration
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil then
+        if obj.status.health ~= nil then
+          hs.status = obj.status.health.status
+          if obj.status.health.message ~= nil then
+            hs.message = obj.status.health.message
+          end
+        end
+      end
+      return hs

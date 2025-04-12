@@ -1,2 +1,24 @@
 sealed-secrets:
-  fullnameOverride: sealed-secrets-controller
+  fullnameOverride: "sealed-secrets-controller"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  controller:
+    healthcheck:
+      readiness:
+        enabled: true
+      liveness:
+        enabled: true
+  tolerations:
+    - key: "CriticalAddonsOnly"
+      operator: "Exists"
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+    seccompProfile:
+      type: RuntimeDefault

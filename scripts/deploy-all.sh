@@ -6,6 +6,7 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default variables
@@ -13,6 +14,7 @@ NAMESPACE_PREFIX=""
 KUBE_CONTEXT=""
 VALIDATE=true
 DRY_RUN=false
+SKIP_PREREQ_CHECK=false
 
 # Help function
 function show_help {
@@ -22,6 +24,7 @@ function show_help {
   echo "  -n, --namespace-prefix    Prefix for namespaces (default: use chart name as namespace)"
   echo "  --no-validate             Skip chart validation"
   echo "  --dry-run                 Perform a dry-run deployment (no changes made)"
+  echo "  --skip-prereq             Skip prerequisites check"
   echo "  -h, --help                Show this help message"
   exit 0
 }
@@ -46,6 +49,10 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=true
       shift
       ;;
+    --skip-prereq)
+      SKIP_PREREQ_CHECK=true
+      shift
+      ;;
     -h|--help)
       show_help
       ;;
@@ -59,6 +66,42 @@ done
 # Set base directory
 BASEDIR=$(dirname "$0")/..
 cd "$BASEDIR" || exit 1
+
+# Function to check prerequisites
+function check_prerequisites {
+  echo -e "${BLUE}Checking prerequisites...${NC}"
+  
+  # Check if kubectl is installed
+  if ! command -v kubectl &> /dev/null; then
+    echo -e "${RED}kubectl is not installed. Please install kubectl first.${NC}"
+    exit 1
+  fi
+  
+  # Check if helm is installed
+  if ! command -v helm &> /dev/null; then
+    echo -e "${RED}helm is not installed. Please install helm first.${NC}"
+    exit 1
+  fi
+  
+  # Check Kubernetes connection
+  if ! kubectl $KUBE_CONTEXT get nodes &> /dev/null; then
+    echo -e "${RED}Cannot connect to Kubernetes cluster. Please check your kubeconfig.${NC}"
+    exit 1
+  fi
+  
+  # Check if cert-manager is installed (required for TLS certificates)
+  if ! kubectl $KUBE_CONTEXT get crd certificates.cert-manager.io &> /dev/null; then
+    echo -e "${YELLOW}Warning: cert-manager CRDs not found. TLS certificates might not work.${NC}"
+    echo -e "${YELLOW}You can install cert-manager with: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.4/cert-manager.yaml${NC}"
+  fi
+  
+  echo -e "${GREEN}Prerequisites check completed.${NC}"
+}
+
+# Run prerequisites check if not skipped
+if [ "$SKIP_PREREQ_CHECK" = false ]; then
+  check_prerequisites
+fi
 
 # Validate charts if enabled
 if [ "$VALIDATE" = true ]; then
@@ -128,6 +171,13 @@ function deploy_chart {
   fi
   
   echo -e "${GREEN}${chart_name} deployment completed!${NC}"
+  
+  # Wait for deployment to be ready if not a dry run
+  if [ "$DRY_RUN" = false ]; then
+    echo -e "${YELLOW}Waiting for ${chart_name} deployment to be ready...${NC}"
+    sleep 5
+    kubectl $KUBE_CONTEXT wait --for=condition=available --timeout=300s deployment -l app.kubernetes.io/instance=$chart_name -n "$namespace" || true
+  fi
 }
 
 # Get all charts from the repository (directories with Chart.yaml files)
@@ -144,40 +194,81 @@ done < <(find "$BASEDIR" -name "Chart.yaml" -type f -print0)
 
 echo -e "${YELLOW}Found ${#found_charts[@]} charts to deploy${NC}"
 
-# Deploy all charts
-echo -e "${YELLOW}Starting deployment of all charts...${NC}"
+# Define deployment order groups
+echo -e "${BLUE}Preparing deployment in optimal order...${NC}"
+FOUNDATION_CHARTS=("sealed-secrets" "vault")
+MONITORING_CHARTS=("prom-stack" "grafana-loki" "blackbox")
+POLICY_CHARTS=("kyverno" "policy-reporter")
+DEPLOYMENT_CHARTS=("argo-cd")
+APP_CHARTS=("keycloak" "sonarqube" "apps")
 
-# Check if we have any core components
-has_core=false
-for chart_dir in "${found_charts[@]}"; do
-  chart_name=$(basename "$chart_dir")
-  if [[ "$chart_name" == "sealed-secrets" || "$chart_name" == "argo-cd" ]]; then
-    has_core=true
-    deploy_chart "$chart_dir"
-  fi
+# Deploy in the optimal order
+echo -e "${YELLOW}Starting deployment of foundation charts...${NC}"
+for chart_name in "${FOUNDATION_CHARTS[@]}"; do
+  for chart_dir in "${found_charts[@]}"; do
+    if [[ $(basename "$chart_dir") == "$chart_name" ]]; then
+      deploy_chart "$chart_dir"
+      # Give extra time for foundation charts to initialize
+      if [ "$DRY_RUN" = false ]; then
+        echo -e "${YELLOW}Waiting for ${chart_name} to initialize...${NC}"
+        sleep 30
+      fi
+    fi
+  done
 done
 
-# Wait for core components to be ready
-if [ "$has_core" = true ]; then
-  echo -e "${YELLOW}Waiting for core components to be ready...${NC}"
-  sleep 30
-fi
-
-# Then deploy the rest of the charts
-for chart_dir in "${found_charts[@]}"; do
-  chart_name=$(basename "$chart_dir")
-  if [[ "$chart_name" != "sealed-secrets" && "$chart_name" != "argo-cd" && "$chart_name" != "apps" ]]; then
-    deploy_chart "$chart_dir"
-  fi
+echo -e "${YELLOW}Starting deployment of monitoring charts...${NC}"
+for chart_name in "${MONITORING_CHARTS[@]}"; do
+  for chart_dir in "${found_charts[@]}"; do
+    if [[ $(basename "$chart_dir") == "$chart_name" ]]; then
+      deploy_chart "$chart_dir"
+    fi
+  done
 done
 
-# Finally deploy the apps chart if it exists
+echo -e "${YELLOW}Starting deployment of policy charts...${NC}"
+for chart_name in "${POLICY_CHARTS[@]}"; do
+  for chart_dir in "${found_charts[@]}"; do
+    if [[ $(basename "$chart_dir") == "$chart_name" ]]; then
+      deploy_chart "$chart_dir"
+    fi
+  done
+done
+
+echo -e "${YELLOW}Starting deployment of deployment charts...${NC}"
+for chart_name in "${DEPLOYMENT_CHARTS[@]}"; do
+  for chart_dir in "${found_charts[@]}"; do
+    if [[ $(basename "$chart_dir") == "$chart_name" ]]; then
+      deploy_chart "$chart_dir"
+      # Give extra time for deployment charts to initialize
+      if [ "$DRY_RUN" = false ]; then
+        echo -e "${YELLOW}Waiting for ${chart_name} to initialize...${NC}"
+        sleep 30
+      fi
+    fi
+  done
+done
+
+echo -e "${YELLOW}Starting deployment of application charts...${NC}"
+for chart_name in "${APP_CHARTS[@]}"; do
+  for chart_dir in "${found_charts[@]}"; do
+    if [[ $(basename "$chart_dir") == "$chart_name" ]]; then
+      deploy_chart "$chart_dir"
+    fi
+  done
+done
+
+# Deploy any remaining charts that were not in our predefined lists
+echo -e "${YELLOW}Checking for any remaining charts...${NC}"
 for chart_dir in "${found_charts[@]}"; do
   chart_name=$(basename "$chart_dir")
-  if [[ "$chart_name" == "apps" ]]; then
+  if [[ ! " ${FOUNDATION_CHARTS[*]} ${MONITORING_CHARTS[*]} ${POLICY_CHARTS[*]} ${DEPLOYMENT_CHARTS[*]} ${APP_CHARTS[*]} " =~ " ${chart_name} " ]]; then
+    echo -e "${YELLOW}Deploying additional chart: ${chart_name}${NC}"
     deploy_chart "$chart_dir"
   fi
 done
 
 echo -e "${GREEN}All charts deployed successfully!${NC}"
 echo -e "${YELLOW}Note: Some applications may take time to fully initialize.${NC}"
+echo -e "${BLUE}You can check the status of your deployments with:${NC}"
+echo -e "  kubectl get pods --all-namespaces"

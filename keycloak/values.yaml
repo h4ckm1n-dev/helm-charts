@@ -13,12 +13,45 @@ keycloak:
   ingress:
     ingressClassName: nginx
     enabled: true
-    hostname: auth.h4ckm1n.org
-  replicaCount: 2
+    hostname: keycloak.h4ckm1n.org
+    tls: true
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+  replicaCount: 3
   metrics:
     enabled: true
-  proxy: edge # Parce qu'on chiffre la connexion jusqu'à l'ingress nginx
+    serviceMonitor:
+      enabled: true
+  proxy: edge
   hostnameVerificationPolicy: "STRICT"
   production: true
   logging:
     level: INFO
+  postgresql:
+    enabled: true
+    primary:
+      persistence:
+        enabled: true
+        size: 8Gi
+    auth:
+      username: bn_keycloak
+      database: bitnami_keycloak
+      password: "CHANGE_THIS_PASSWORD"
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+  extraEnvVars:
+    - name: KC_HEALTH_ENABLED
+      value: "true"
+    - name: KEYCLOAK_EXTRA_ARGS
+      value: "--spi-theme-static-max-age=86400 --spi-theme-cache-themes=true --spi-theme-cache-templates=true"

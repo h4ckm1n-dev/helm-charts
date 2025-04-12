@@ -1,65 +1,95 @@
 kyverno:
   admissionController:
-    replicas: 1
+    replicas: 2
     resources:
       requests:
-        cpu: 60m
-        memory: 64Mi
-      limits:
         cpu: 100m
-        memory: 100Mi
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
   cleanupController:
     resources:
       requests:
-        cpu: 10m
-        memory: 64Mi
+        cpu: 50m
+        memory: 128Mi
       limits:
         cpu: 100m
-        memory: 100Mi
+        memory: 256Mi
   backgroundController:
     resources:
       requests:
-        cpu: 10m
-        memory: 64Mi
+        cpu: 50m
+        memory: 128Mi
       limits:
         cpu: 100m
-        memory: 100Mi
+        memory: 256Mi
   reportsController:
     resources:
       requests:
-        cpu: 10m
-        memory: 64Mi
+        cpu: 50m
+        memory: 128Mi
       limits:
         cpu: 100m
-        memory: 100Mi
+        memory: 256Mi
+
+  # Configuration de la haute disponibilité
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
 
   features:
     logging:
-      verbosity: 4 # INFO
+      verbosity: 2 # INFO
 
   config:
-    excludeKyvernoNamespace: false
+    excludeKyvernoNamespace: true
+    resourceFilters:
+      - "[Event,*,*]"
+      - "[*,kube-system,*]"
+      - "[*,kube-public,*]"
+      - "[*,kube-node-lease,*]"
+      - "[Node,*,*]"
+      - "[APIService,*,*]"
+      - "[TokenReview,*,*]"
+      - "[SubjectAccessReview,*,*]"
+      - "[SelfSubjectAccessReview,*,*]"
+      - "[Binding,*,*]"
+      - "[ReplicaSet,*,*]"
+      - "[ReportChangeRequest,*,*]"
+      - "[ClusterReportChangeRequest,*,*]"
 
+    # Configuration des webhooks
     webhooks:
       - namespaceSelector:
           matchExpressions:
             - key: kubernetes.io/metadata.name
               operator: NotIn
-              # @see https://kyverno.io/docs/troubleshooting/#api-server-is-blocked
               values:
                 - kube-system
                 - kyverno
+                - cert-manager
+                - ingress-nginx
 
+# Configuration des politiques Kyverno
 kyverno-policies:
-  # --- Native chart --- #
-
-  # set to "Enforce" to block invalid deployments
-  # set to "audit" to generate warning events on deployments
+  # Mode de validation des échecs (audit ou enforce)
   validationFailureAction: Audit
 
-  # see https://kyverno.io/policies/?policytypes=Pod%2520Security%2520Standards%2520%28Baseline%29%2BPod%2520Security%2520Standards%2520%28Restricted%29
+  # Standard de sécurité Pod
   podSecurityStandard: restricted
 
+  # Exclusions de politiques spécifiques
   policyExclude:
     adding-capabilities:
       any:
@@ -67,6 +97,8 @@ kyverno-policies:
             kinds: [Deployment, DaemonSet, Pod]
             namespaces:
               - kube-system
+              - cert-manager
+              - ingress-nginx
 
     host-ports-none:
       any:
@@ -74,6 +106,7 @@ kyverno-policies:
             kinds: [Deployment, DaemonSet, Pod]
             namespaces:
               - kube-system
+              - ingress-nginx
 
     require-drop-all:
       any:
@@ -81,15 +114,41 @@ kyverno-policies:
             kinds: [StatefulSet, Deployment, DaemonSet, Pod]
             namespaces:
               - kube-system
+              - cert-manager
 
+  # Comportement en cas d'échec
   failurePolicy: Ignore
 
-  # --- Custom chart --- #
+  # Namespaces exclus pour toutes les politiques
+  excludedNamespaces:
+    - kube-system
+    - kube-public
+    - kube-node-lease
+    - cert-manager
 
-  # This will exclude namespace for EACH policy
-  excludedNamespaces: [kube-system]
-
+  # Politiques additionnelles
   additional:
+    kubernetes:
+      requirePodRequestsLimits:
+        enabled: true
+        validation: audit
+        excludedNamespaces:
+          - kube-system
+          - cert-manager
+          - ingress-nginx
+
+      requireEmptyDirRequestsLimits:
+        enabled: true
+        validation: audit
+
+      addNamespaceQuota:
+        enabled: true
+        excludedNamespaces:
+          - default
+          - kube-system
+          - cert-manager
+          - kyverno
+
     argocd:
       applicationPreventUpdatesProject:
         enabled: false
@@ -116,71 +175,22 @@ kyverno-policies:
         enabled: true
         validation: Audit
 
-    kubernetes:
-      requireDropAllCapabilities:
-        enabled: false
-        validation: Audit
-        excludedNamespaces: [velero]
+    requireDropAllCapabilities:
+      enabled: false
+      validation: Audit
+      excludedNamespaces: [velero]
 
-      disallowLatestTag:
-        enabled: true
-        validation: Audit
+    disallowLatestTag:
+      enabled: true
+      validation: Audit
 
-      requirePodRequestsLimits:
-        enabled: true
-        validation: Audit
+    requireImageChecksum:
+      enabled: false
+      validation: Audit
 
-      # Generator
-      addNetworkPolicy:
-        enabled: false
-
-      # Generator
-      addNetworkPolicyDns:
-        enabled: false
-
-      # Generator
-      addNamespaceQuota:
-        enabled: false
-
-      # Generator
-      addSafeToEvict:
-        enabled: false
-
-      # Garbage collector
-      checkDeprecatedApis:
-        enabled: false
-
-      disallowDefaultNamespace:
-        enabled: true
-        validation: Enforce
-
-      requireReadOnlyRootFileSystem:
-        enabled: true
-        validation: Audit
-
-      restrictNodePort:
-        enabled: true
-        validation: Audit
-
-      checkServiceAccount:
-        enabled: false
-        validation: Audit
-
-      checkNodeForCVE20220185:
-        enabled: true
-        validation: Audit
-
-      requireImageChecksum:
-        enabled: false
-        validation: Audit
-
-      # Mutator
-      #resolveImageToDigest:
-      #  enabled: false
-
-      requireEmptyDirRequestsLimits:
-        enabled: true
-        validation: Audit
+    # Mutator
+    #resolveImageToDigest:
+    #  enabled: false
 
     cleanup:
       # Garbage collector

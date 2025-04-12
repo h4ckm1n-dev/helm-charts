@@ -1,0 +1,18 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/application-crd.yaml": [],
+    "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.29.3-standalone-strict/all.json": [],
+    "https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/crds/applicationset-crd.yaml": [
+      "file:///home/h4ckm1n/Documents/argo-cd/apps/templates/*.yaml"
+    ],
+    "https://json.schemastore.org/yamllint.json": [],
+    "https://json.schemastore.org/helmfile.json": [
+      "file:///home/h4ckm1n/Documents/argo-cd/argo-cd/values.yaml",
+      "file:///home/h4ckm1n/Documents/argo-cd/blackbox/values.yaml",
+      "file:///home/h4ckm1n/Documents/argo-cd/grafana-loki/values.yaml",
+      "file:///home/h4ckm1n/Documents/argo-cd/keycloak/values.yaml",
+      "file:///home/h4ckm1n/Documents/argo-cd/prom-stack/values.yaml"
+    ],
+    "https://www.artillery.io/schema.json": []
+  }
+}

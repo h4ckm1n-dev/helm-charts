@@ -91,3 +91,131 @@ prometheus-blackbox-exporter:
     requests:
       cpu: 100m
       memory: 100Mi
+
+app:
+  name: blackbox-exporter
+  port: 9115
+
+replicaCount: 1
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 200Mi
+  requests:
+    cpu: 50m
+    memory: 100Mi
+
+# Configuration de sécurité des conteneurs
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  procMount: Default
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001
+
+# Configuration de sécurité des pods
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+
+# Sondes de santé
+probes:
+  liveness:
+    initialDelaySeconds: 10
+    path: /
+    periodSeconds: 10
+  readiness:
+    initialDelaySeconds: 10
+    path: /
+    periodSeconds: 10
+
+# Configuration du service
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 9115
+
+# Configuration de l'Ingress
+ingress:
+  enabled: true
+  className: nginx
+  app:
+    name: blackbox-exporter
+    port: 9115
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  host: blackbox.h4ckm1n.org
+  path: /
+  pathType: Prefix
+  tlsEnabled: true
+  tlsSecret: blackbox-tls-secret
+
+# Configuration HPA
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 80
+
+# Configuration du déploiement
+strategy:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Configuration spécifique à Blackbox
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+        follow_redirects: true
+        preferred_ip_protocol: "ip4"
+        ip_protocol_fallback: true
+    http_post_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: "{}"
+        follow_redirects: true
+        preferred_ip_protocol: "ip4"
+    tcp_connect:
+      prober: tcp
+      timeout: 5s
+    dns_check:
+      prober: dns
+      dns:
+        query_name: "h4ckm1n.org"
+        query_type: "A"
+        preferred_ip_protocol: "ip4"
+    icmp:
+      prober: icmp
+      timeout: 5s
+      icmp:
+        preferred_ip_protocol: "ip4"
+
+# Configuration des cibles prédéfinies à surveiller
+targets:
+  - name: api-health
+    url: https://api.h4ckm1n.org/health
+    module: http_2xx
+    interval: 30s
+  - name: dns-check
+    target: h4ckm1n.org
+    module: dns_check
+    interval: 60s
+  - name: website
+    url: https://h4ckm1n.org
+    module: http_2xx
+    interval: 30s

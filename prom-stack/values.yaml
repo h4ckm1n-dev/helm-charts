@@ -1,5 +1,5 @@
 kube-prometheus-stack:
-  fullnameOverride: kps
+  fullnameOverride: "prom-stack"
   cleanPrometheusOperatorObjectNames: true
   scrapeConfig:
     enabled: true
@@ -143,13 +143,11 @@ kube-prometheus-stack:
   prometheusOperator:
     resources:
       limits:
-        cpu: 1000m
-        memory: 400Mi
-        ephemeral-storage: 100Mi
-      requests:
-        cpu: 20m
+        cpu: 200m
         memory: 200Mi
-        ephemeral-storage: 100Mi
+      requests:
+        cpu: 50m
+        memory: 100Mi
     securityContext:
       runAsUser: 1000
       runAsGroup: 1000
@@ -159,50 +157,36 @@ kube-prometheus-stack:
     prometheusConfigReloader:
       resources:
         limits:
-          cpu: 1000m
-          memory: 400Mi
-          ephemeral-storage: 100Mi
+          cpu: 50m
+          memory: 50Mi
         requests:
-          cpu: 20m
-          memory: 200Mi
-          ephemeral-storage: 100Mi
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        seccompProfile:
-          type: RuntimeDefault
+          cpu: 10m
+          memory: 10Mi
 
   prometheus:
     ingress:
       enabled: true
-      hosts:
-        - prometheus.h4ckm1n.org
       annotations:
         kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      hosts:
+        - prometheus.h4ckm1n.org
+      tls:
+        - secretName: prom-tls
+          hosts:
+            - prometheus.h4ckm1n.org
     resources:
       limits:
         cpu: 1000m
-        memory: 400Mi
-        ephemeral-storage: 100Mi
+        memory: 2Gi
       requests:
-        cpu: 20m
-        memory: 200Mi
-        ephemeral-storage: 100Mi
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      runAsNonRoot: true
-      seccompProfile:
-        type: RuntimeDefault
-      ruleSelectorNilUsesHelmValues: false
-      serviceMonitorSelectorNilUsesHelmValues: false
-      podMonitorSelectorNilUsesHelmValues: false
-      probeSelectorNilUsesHelmValues: false
-      scrapeConfigSelectorNilUsesHelmValues: false
-      retention: 365d
-      retentionSize: 48GiB
-      enforcedNamespaceLabel: "enabled"
+        cpu: 150m
+        memory: 1Gi
+    prometheusSpec:
+      retention: 15d
+      retentionSize: 20Gi
+      scrapeInterval: 30s
+      evaluationInterval: 30s
       storageSpec:
         volumeClaimTemplate:
           spec:
@@ -210,4 +194,44 @@ kube-prometheus-stack:
               - ReadWriteOnce
             resources:
               requests:
-                storage: 50Gi
+                storage: 20Gi
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+  alertmanager:
+    enabled: true
+    config:
+      route:
+        receiver: "discord"
+        routes:
+          - matchers:
+              - alertname = "Watchdog"
+            receiver: "null"
+          - matchers:
+              - alertname =~ ".*"
+            receiver: "discord"
+      receivers:
+        - name: "null"
+        - name: "discord"
+          discord_configs:
+            - send_resolved: true
+              webhook_url: "REPLACE_WITH_YOUR_WEBHOOK_URL"
+              title: '{{ if eq .Status "firing" }} 🚨 Alert {{ else }} ✅ Resolve {{ end }}{{ .CommonLabels.alertname }} 🚧 {{ .CommonLabels.severity }}'
+              text: >-
+                - 📦 **Pod**: `{{ .CommonLabels.namespace }}/{{ .CommonLabels.pod }}`
+                {{- range .Alerts }}
+                - 🔖 **Alert**: `{{ .Labels.alertname }}`{{- with .Annotations }}{{- if .message }}{{- if .description }}, {{ .message }}, {{ .description }}{{- else }}, {{ .message }}{{- end }}{{- else if .description }}, {{ .description }}{{- end }}{{- end }}
+                {{- if .Annotations.Source }}
+                - 🌐 [View in Prometheus]({{ .Annotations.Source }})
+                {{- end }}
+                {{- if .Annotations.runbook_url }}
+                - 📘 [View Runbook]({{ .Annotations.runbook_url }})
+                {{- end }}
+                - 🔗 [Alert Source]({{ .GeneratorURL }})
+                {{- end }}
+                ---

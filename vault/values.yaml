@@ -1,1 +1,93 @@
 vault:
+  server:
+    # Ressources pour le serveur Vault
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+    # Configuration de la haute disponibilité (HA)
+    ha:
+      enabled: true
+      replicas: 3
+      raft:
+        enabled: true
+        setNodeId: true
+
+    # Configuration du stockage pour Vault
+    dataStorage:
+      enabled: true
+      size: 10Gi
+      storageClass: standard
+      accessMode: ReadWriteOnce
+
+    # Paramètres de configuration de base
+    extraEnvironmentVars:
+      VAULT_CACERT: /vault/userconfig/tls-ca/ca.crt
+
+    # Configuration TLS
+    extraVolumes:
+      - type: secret
+        name: vault-tls
+        path: /vault/userconfig/vault-tls
+
+    # Paramètres de sécurité
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 100
+      runAsGroup: 1000
+      fsGroup: 1000
+
+    # Configuration d'Ingress
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - host: vault.h4ckm1n.org
+          paths:
+            - /
+      tls:
+        - secretName: vault-tls
+          hosts:
+            - vault.h4ckm1n.org
+      annotations:
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+
+    # Configuration des services
+    service:
+      enabled: true
+
+    # Configuration d'audit
+    auditStorage:
+      enabled: true
+      size: 5Gi
+      storageClass: standard
+
+  # Configuration du service d'injection
+  injector:
+    enabled: true
+    replicas: 2
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 250m
+
+  # Configuration UI
+  ui:
+    enabled: true
+
+  # Configuration de la tolérance pour les nœuds
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
