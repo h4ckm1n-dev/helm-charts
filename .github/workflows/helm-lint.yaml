@@ -1,0 +1,64 @@
+name: Helm Chart Validation
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/Chart.yaml'
+      - '**/values.yaml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
+      - '**/Chart.yaml'
+      - '**/values.yaml'
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.1
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Install kubeval
+        run: |
+          curl -Lo kubeval.tar.gz https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval.tar.gz
+          sudo cp kubeval /usr/local/bin
+
+      - name: Lint YAML files
+        run: yamllint -c .yamllint.yaml .
+
+      - name: Run chart-testing (lint)
+        run: ct lint --config .ct.yaml
+
+      - name: Validate Kubernetes resources
+        run: |
+          find . -path "*/templates/*.yaml" -type f -print0 | xargs -0 -I{} sh -c 'echo "Validating {}..." && kubeval --strict --ignore-missing-schemas {}'
+
+      - name: Generate documentation
+        uses: docker://jnorwood/helm-docs:latest
+        with:
+          entrypoint: helm-docs
+          args: --chart-search-root=.

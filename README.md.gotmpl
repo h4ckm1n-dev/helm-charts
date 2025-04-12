@@ -1,0 +1,16 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+## Installation
+
+```console
+helm repo add {{ template "chart.name" . }} https://your-repo-url/
+helm install my-release {{ template "chart.name" . }}/{{ template "chart.name" . }}
+```
+
+## Values
+
+{{ template "chart.valuesTable" . }}

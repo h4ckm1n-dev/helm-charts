@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-added-large-files
+
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args: [--config-file=.yamllint.yaml]
+
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.22
+    hooks:
+      - id: helmlint
+
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: v1.11.0
+    hooks:
+      - id: helm-docs
+        args:
+          - --chart-search-root=.
+          - --template-files=README.md.gotmpl
+          - --log-level=debug
+
+  - repo: local
+    hooks:
+      - id: kubeval
+        name: kubeval
+        description: Validates Kubernetes manifests
+        entry: bash -c 'find . -path "*/templates/*.yaml" -type f -print0 | xargs -0 -I{} sh -c "echo {} && kubeval --strict --ignore-missing-schemas {}"'
+        language: system
+        pass_filenames: false
