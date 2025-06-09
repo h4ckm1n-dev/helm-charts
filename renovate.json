@@ -1,9 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "regexManagers": [
+  "extends": [
+    "config:recommended"
+  ],
+  "customManagers": [
     {
-      "fileMatch": ["^sonarqube/values\\.yaml$"],
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^sonarqube/values\\.yaml$/"
+      ],
       "matchStrings": [
         "https://github\\.com/dependency-check/dependency-check-sonar-plugin/releases/download/(?<currentValue>[^/]+)/sonar-dependency-check-plugin-[^/]+\\.jar",
         "https://github\\.com/spotbugs/sonar-findbugs/releases/download/(?<currentValue>[^/]+)/sonar-findbugs-plugin-[^/]+\\.jar",
@@ -19,34 +24,61 @@
     {
       "groupName": "all patch dependencies",
       "groupSlug": "all-patch",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true,
-      "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
-      "labels": ["dependencies", "patch"]
+      "schedule": [
+        "after 10pm on Monday, Tuesday, Wednesday, Thursday",
+        "before 5am on Monday, Tuesday, Wednesday, Thursday"
+      ],
+      "labels": [
+        "dependencies",
+        "patch"
+      ],
+      "matchPackageNames": [
+        "*"
+      ]
     },
     {
       "groupName": "all minor dependencies",
       "groupSlug": "all-minors",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["minor"],
+      "matchUpdateTypes": [
+        "minor"
+      ],
       "automerge": true,
-      "schedule": ["after 10pm and before 5am on Monday, Tuesday, Wednesday, Thursday"],
-      "labels": ["dependencies", "minor"]
+      "schedule": [
+        "after 10pm on Monday, Tuesday, Wednesday, Thursday",
+        "before 5am on Monday, Tuesday, Wednesday, Thursday"
+      ],
+      "labels": [
+        "dependencies",
+        "minor"
+      ],
+      "matchPackageNames": [
+        "*"
+      ]
     },
     {
       "groupName": "all major dependencies",
       "groupSlug": "all-majors",
-      "matchPackagePatterns": ["*"],
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "labels": ["dependencies", "major"],
-      "minimumReleaseAge": "7 days"
+      "labels": [
+        "dependencies",
+        "major"
+      ],
+      "minimumReleaseAge": "7 days",
+      "matchPackageNames": [
+        "*"
+      ]
     }
   ],
   "automergeType": "branch",
   "automerge": true,
-  "requiredStatusChecks": null,
+  "ignoreTests": true,
   "dependencyDashboard": true,
   "timezone": "Europe/London"
 }
