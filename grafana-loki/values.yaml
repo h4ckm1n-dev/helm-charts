@@ -57,7 +57,7 @@ loki:
           spec:
             containers:
               - name: nginx
-                image: nginx:1.28
+                image: nginx:1.29
                 ports:
                   - containerPort: 80
                 volumeMounts:
