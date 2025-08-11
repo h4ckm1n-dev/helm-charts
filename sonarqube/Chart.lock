@@ -1,6 +1,6 @@
 dependencies:
 - name: sonarqube
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 8.1.13
-digest: sha256:47d46ccf873def7f7b1f970c8206da94cfd697ce1f82d8563d43916b66e70bb9
-generated: "2025-08-07T00:07:43.933354486Z"
+  version: 8.1.16
+digest: sha256:7f4ab45565425e78bca32936678e02928f168366cca4179db026fa85fd7406b1
+generated: "2025-08-11T01:53:35.293972001Z"
