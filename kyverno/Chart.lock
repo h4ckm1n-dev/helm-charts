@@ -1,9 +1,9 @@
 dependencies:
 - name: kyverno
   repository: https://kyverno.github.io/kyverno/
-  version: 3.7.0
+  version: 3.7.1
 - name: kyverno-policies
   repository: https://kyverno.github.io/kyverno/
-  version: 3.7.0
-digest: sha256:25dbcb15ee251adfe1f8017d70f74e26fad2a0487fa72c9b09a7039f3fe4b963
-generated: "2026-02-02T23:07:15.441350194Z"
+  version: 3.7.1
+digest: sha256:f64dd20e7459408adeac1c3aa9a73fefb896c69396288b57ca893c47d7d88ec2
+generated: "2026-02-19T22:25:56.153930228Z"
